@@ -11,6 +11,19 @@ cd "$(
   cd "$(dirname "$0")" || exit
   pwd
 )" || exit
+
+red() {
+	echo -e "\033[31m\033[01m$1\033[0m"
+}
+
+green() {
+	echo -e "\033[32m\033[01m$1\033[0m"
+}
+
+yellow() {
+	echo -e "\033[33m\033[01m$1\033[0m"
+}
+
 Green="\033[32m"
 Red="\033[31m"
 Yellow="\033[33m"
@@ -25,10 +38,10 @@ website_dir="/www/web/"
 nginx_conf_dir="/etc/nginx/conf/conf.d"
 
 cert_group="nobody"
-# random_num=$((RANDOM % 12 + 4))
-
 VERSION=$(echo "${VERSION}" | awk -F "[()]" '{print $2}')
-# WS_PATH="/$(head -n 10 /dev/urandom | md5sum | head -c ${random_num})/"
+
+random_num=$((RANDOM % 12 + 4))
+WSPATH="/$(head -n 10 /dev/urandom | md5sum | head -c ${random_num})/"
 
 function print_ok() {
   echo -e "${OK} ${Blue} $1 ${Font}"
@@ -137,7 +150,7 @@ function dependency_install() {
   ${INS} jq
 
   if ! command -v jq; then
-    wget -P /usr/bin https://raw.githubusercontent.com/hhuyf/xsetup/main/jq && chmod +x /usr/bin/jq
+    wget -P /usr/bin https://raw.githubusercontent.com/wulabing/Xray_onekey/nginx_forward/binary/jq && chmod +x /usr/bin/jq
     judge "安装 jq"
   fi
 
@@ -191,22 +204,22 @@ function modify_UUID() {
 function configure_nginx() {
   nginx_conf="/etc/nginx/conf.d/${domain}.conf"
   cd /etc/nginx/conf.d/ && rm -f ${domain}.conf
-cat > /etc/nginx/conf.d/${domain}.conf << END_TEXT
+cat > /etc/nginx/conf.d/${domain}.conf <<-EOF
   server {
     listen 80;
     listen [::]:80;
     root /www/web;               # 网页根目录路径
     if ($http_upgrade = "websocket") { 
-   rewrite ^/(.*) /cn?ed=2048 break;
+   rewrite ^/(.*) ${WSPATH}?ed=2048 break;
     }
 location / {
 # proxy_pass http://www.ddxsku.com/;
 proxy_set_header Accept-Encoding '';
 }
-location /cn { # 与 V2Ray 配置中的 path 保持一致     if ($http_upgrade != "websocket") {
-        return 404;     }     proxy_redirect / /;     proxy_pass http://127.0.0.1:8080; # 假设WebSocket监听在环回地址的8080端口上     proxy_http_version 1.1;     proxy_set_header Upgrade $http_upgrade;     proxy_set_header Connection "upgrade";    }
+location ${WSPATH}  {      if ($http_upgrade != "websocket") {
+        return 401;     }     proxy_redirect / /;     proxy_pass http://127.0.0.1:8080; # 假设WebSocket监听在环回地址的8080端口上     proxy_http_version 1.1;     proxy_set_header Upgrade $http_upgrade;     proxy_set_header Connection "upgrade";    }
     }
-END_TEXT
+EOF
   systemctl restart nginx
 }
 
@@ -215,17 +228,17 @@ END_TEXT
 
 function configure_xray_ws() {
   cd /usr/local/etc/xray && rm -f config.json 
-cat > /usr/local/etc/xray/config.json  << END_TEXT
+local uuid="$(cat '/proc/sys/kernel/random/uuid')"
+cat > /usr/local/etc/xray/config.json  <<-EOF
 {
-"inbound": {
+"inbound”:[  {
 "port": 8080, 
 "listen":"127.0.0.1", 
 "protocol": "vmess", 
 "settings": {
-{
  "clients": [
         {
-          "id": "8b04f4d6-ec18-46ee-ba7a-fa9200bcd915",
+          "id": “$uuid”,
           "level": 1,
           "alterId": 0
         }
@@ -235,23 +248,21 @@ cat > /usr/local/etc/xray/config.json  << END_TEXT
 "streamSettings": {
 "network": "ws", 
 "wsSettings": {
-"path": “/cn”
+"path": “$WSPATH”
 }
 }
-},
+} ],
 "outbound": {
 "protocol": "freedom",
 "settings": {}
 }
 }
-END_TEXT
-  modify_UUID
+EOF
 }
 
 function xray_install() {
-  print_ok "安装 Xray"
   curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh | bash -s -- install
-  judge "Xray 安装"
+judge “安装Xray“
 }
 
 
