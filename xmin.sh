@@ -137,7 +137,7 @@ function dependency_install() {
   ${INS} jq
 
   if ! command -v jq; then
-    wget -P /usr/bin https://raw.githubusercontent.com/wulabing/Xray_onekey/nginx_forward/binary/jq && chmod +x /usr/bin/jq
+    wget -P /usr/bin https://raw.githubusercontent.com/hhuyf/xsetup/main/jq && chmod +x /usr/bin/jq
     judge "安装 jq"
   fi
 
