@@ -313,7 +313,7 @@ function ws_information() {
   echo -e "${Red} 用户 ID（UUID）：${Font} $UUID"
   echo -e "${Red} 加密方式（security）：${Font} 自选 "
   echo -e "${Red} 传输协议（network）：${Font} ws"
-   echo -e "${Red} 路径（path）：${Font} $WS_PATH "
+  echo -e "${Red} 路径（path）：${Font} $WS_PATH "
   print_ok "————————————————————————"
   print_ok "URL 链接（VMESS + WebSocket）"
   print_ok “vmess://$UUID@$local_ip:$PORT?type=ws&security=none&path=%2f${WS_PATH_WITHOUT_SLASH}%2f”
