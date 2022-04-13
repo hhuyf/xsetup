@@ -41,7 +41,7 @@ cert_group="nobody"
 VERSION=$(echo "${VERSION}" | awk -F "[()]" '{print $2}')
 
 random_num=$((RANDOM % 12 + 4))
-WSPATH="/$(head -n 10 /dev/urandom | md5sum | head -c ${random_num})/"
+WSPATH="/$(head -n 10 /dev/urandom | md5sum | head -c ${random_num})"
 
 function print_ok() {
   echo -e "${OK} ${Blue} $1 ${Font}"
